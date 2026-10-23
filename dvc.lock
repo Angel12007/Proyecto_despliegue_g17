@@ -1,0 +1,49 @@
+schema: '2.0'
+stages:
+  cargar:
+    cmd: python src/cargar_datos.py
+    deps:
+    - path: data/raw/df_merged_final.xlsx
+      hash: md5
+      md5: 2e4ed17d8ae7a2e8fc6037e93078fbbf
+      size: 426190
+    - path: src/cargar_datos.py
+      hash: md5
+      md5: d689ca0ca75dee463eb843efbc56b5a0
+      size: 2432
+    params:
+      params.yaml:
+        datos.archivo_crudo: data/raw/df_merged_final.xlsx
+    outs:
+    - path: data/interim/datos_cargados.csv
+      hash: md5
+      md5: 38fb16892ebe36668e5f3e9c4252d108
+      size: 365591
+  procesar:
+    cmd: python src/procesar_datos.py
+    deps:
+    - path: data/interim/datos_cargados.csv
+      hash: md5
+      md5: 38fb16892ebe36668e5f3e9c4252d108
+      size: 365591
+    - path: src/clinical_features.py
+      hash: md5
+      md5: 12e0326175d8d95c1e891e3852b0f621
+      size: 3173
+    - path: src/preprocessing.py
+      hash: md5
+      md5: 45d6e0aa8172b3b237f9d2e9d2834b35
+      size: 6841
+    - path: src/procesar_datos.py
+      hash: md5
+      md5: 335d459d6105e31241726fd228bb92ad
+      size: 3736
+    params:
+      params.yaml:
+        procesamiento.fecha_corte_temporal: '2024-07-01'
+        procesamiento.umbral_estancia_prolongada_dias: 7
+    outs:
+    - path: data/processed/dataset_modelado.csv
+      hash: md5
+      md5: 5d2387490cc54a665faa839ec7258f53
+      size: 224481

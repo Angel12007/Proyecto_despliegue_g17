@@ -1,0 +1,23 @@
+stages:
+  cargar:
+    cmd: python src/cargar_datos.py
+    deps:
+      - src/cargar_datos.py
+      - data/raw/df_merged_final.xlsx
+    params:
+      - datos.archivo_crudo
+    outs:
+      - data/interim/datos_cargados.csv
+
+  procesar:
+    cmd: python src/procesar_datos.py
+    deps:
+      - src/procesar_datos.py
+      - src/clinical_features.py
+      - src/preprocessing.py
+      - data/interim/datos_cargados.csv
+    params:
+      - procesamiento.umbral_estancia_prolongada_dias
+      - procesamiento.fecha_corte_temporal
+    outs:
+      - data/processed/dataset_modelado.csv
