@@ -21,3 +21,30 @@ stages:
       - procesamiento.fecha_corte_temporal
     outs:
       - data/processed/dataset_modelado.csv
+
+  explorar:
+    cmd: python src/exploracion.py
+    deps:
+      - src/exploracion.py
+      - data/processed/dataset_modelado.csv
+    outs:
+      - reports/eda/resumen_variables.csv:
+          cache: false
+      - reports/eda/desenlaces.csv:
+          cache: false
+      - reports/eda/ingresos_por_periodo.csv:
+          cache: false
+      - reports/eda/fig1_faltantes.png:
+          cache: false
+      - reports/eda/fig2_estancia.png:
+          cache: false
+      - reports/eda/fig3_desenlaces_periodo.png:
+          cache: false
+      - reports/eda/fig4_variables_por_mortalidad.png:
+          cache: false
+      - reports/eda/fig5_correlaciones.png:
+          cache: false
+    metrics:
+      - reports/eda/metricas_eda.json:
+          cache: false
+

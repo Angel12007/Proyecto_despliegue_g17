@@ -1,0 +1,12 @@
+{
+  "pacientes": 997,
+  "predictores": 43,
+  "variables_con_mas_30pct_faltante": 14,
+  "estancia_mediana_dias": 3.0,
+  "pct_mortality": 13.7,
+  "pct_death_30d": 16.5,
+  "pct_estancia_prolongada": 15.1,
+  "pct_muerte_o_estancia_prolongada": 23.9,
+  "n_entrenamiento": 816,
+  "n_prueba": 181
+}

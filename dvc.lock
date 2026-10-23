@@ -9,8 +9,8 @@ stages:
       size: 426190
     - path: src/cargar_datos.py
       hash: md5
-      md5: d689ca0ca75dee463eb843efbc56b5a0
-      size: 2432
+      md5: da826c500044d1c27bea5c9f710dd2eb
+      size: 2497
     params:
       params.yaml:
         datos.archivo_crudo: data/raw/df_merged_final.xlsx
@@ -28,16 +28,16 @@ stages:
       size: 365591
     - path: src/clinical_features.py
       hash: md5
-      md5: 12e0326175d8d95c1e891e3852b0f621
-      size: 3173
+      md5: b737429dac8e3691e5f586ac40ef0ae7
+      size: 3253
     - path: src/preprocessing.py
       hash: md5
-      md5: 45d6e0aa8172b3b237f9d2e9d2834b35
-      size: 6841
+      md5: 25f1dd68393fd572ca4e99745d7226c5
+      size: 6994
     - path: src/procesar_datos.py
       hash: md5
-      md5: 335d459d6105e31241726fd228bb92ad
-      size: 3736
+      md5: 7e1074fb8602903b66058fc7327eac35
+      size: 3828
     params:
       params.yaml:
         procesamiento.fecha_corte_temporal: '2024-07-01'
@@ -47,3 +47,51 @@ stages:
       hash: md5
       md5: 5d2387490cc54a665faa839ec7258f53
       size: 224481
+  explorar:
+    cmd: python src/exploracion.py
+    deps:
+    - path: data/processed/dataset_modelado.csv
+      hash: md5
+      md5: 5d2387490cc54a665faa839ec7258f53
+      size: 224481
+    - path: src/exploracion.py
+      hash: md5
+      md5: ad87f6a0fdc363e8e3d433383c65e4a2
+      size: 8195
+    outs:
+    - path: reports/eda/desenlaces.csv
+      hash: md5
+      md5: de229b6c5dce654101a064b6efaf639e
+      size: 258
+    - path: reports/eda/fig1_faltantes.png
+      hash: md5
+      md5: 4aa573be6db5036f18c57ab0cefa9bc6
+      size: 69413
+    - path: reports/eda/fig2_estancia.png
+      hash: md5
+      md5: ad3764e10096e7bdbcd62651a965dddb
+      size: 27095
+    - path: reports/eda/fig3_desenlaces_periodo.png
+      hash: md5
+      md5: 5126612d8ea30c8055fb3720dba33536
+      size: 58694
+    - path: reports/eda/fig4_variables_por_mortalidad.png
+      hash: md5
+      md5: 7050eae509852c44df3d9cad87d74743
+      size: 67650
+    - path: reports/eda/fig5_correlaciones.png
+      hash: md5
+      md5: 68d93d69b90a61d428debfdfba91d4dd
+      size: 145216
+    - path: reports/eda/ingresos_por_periodo.csv
+      hash: md5
+      md5: f4fd36fb9f4225ce84ebdab5c0c9bb15
+      size: 311
+    - path: reports/eda/metricas_eda.json
+      hash: md5
+      md5: 494b7dd76585c6baa49f363a54d8fc76
+      size: 302
+    - path: reports/eda/resumen_variables.csv
+      hash: md5
+      md5: 009a6769dd085d0f6416999bd8c13e40
+      size: 2866
