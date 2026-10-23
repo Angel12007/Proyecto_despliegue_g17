@@ -1,0 +1,10 @@
+datos:
+  archivo_crudo: data/raw/df_merged_final.xlsx
+  archivo_cargado: data/interim/datos_cargados.csv
+  archivo_procesado: data/processed/dataset_modelado.csv
+
+procesamiento:
+  umbral_estancia_prolongada_dias: 7
+  # Corte para validación temporal: se entrena con ingresos anteriores
+  # a esta fecha y se evalúa con los posteriores.
+  fecha_corte_temporal: "2024-07-01"

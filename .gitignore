@@ -1,0 +1,19 @@
+# Entornos y caché de Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Credenciales: NUNCA subir llaves de AWS Academy
+.aws/
+*credentials*
+datos_sem*.txt
+.env
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Los datos no van en Git: los versiona DVC.
+# DVC agrega sus propias reglas en data/raw/.gitignore y en /data/.gitignore
