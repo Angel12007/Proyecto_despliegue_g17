@@ -1,0 +1,5 @@
+desenlace,variable,n_con_dato,eventos,porcentaje
+Muerte en UCI,mortality,997,137,13.7
+Muerte a 30 días,death_30d,861,142,16.5
+Estancia ≥ 7 días,estancia_prolongada,996,150,15.1
+Muerte o estancia ≥ 7 días,muerte_o_estancia_prolongada,997,238,23.9
