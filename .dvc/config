@@ -1,0 +1,5 @@
+[core]
+    remote = s3remote
+['remote "s3remote"']
+    url = s3://proyecto-g17-dvc-2026/datos
+    region = us-east-1
