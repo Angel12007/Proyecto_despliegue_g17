@@ -1,0 +1,90 @@
+/* UCI Analytics – estilos basados en la maqueta de la entrega 1 */
+:root {
+  --azul-oscuro: #172a40;
+  --azul: #1f5f8b;
+  --fondo: #eef3f8;
+  --texto: #1d2b3a;
+  --suave: #5b6b7c;
+  --borde: #dde5ee;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: var(--texto); background: var(--fondo); }
+
+.marco { display: flex; min-height: 100vh; }
+
+/* Menú lateral */
+.lateral { width: 250px; flex: 0 0 250px; background: var(--azul-oscuro); color: white; padding: 28px 16px;
+           display: flex; flex-direction: column; min-height: 100vh; }
+.lateral > .menu { position: sticky; top: 20px; }
+.logo { font-size: 24px; font-weight: 700; margin-bottom: 48px; padding-left: 8px; }
+.logo-cruz { margin-right: 10px; }
+.menu { display: flex; flex-direction: column; gap: 8px; }
+.menu-item { color: white; text-decoration: none; padding: 14px 18px; border-radius: 10px; font-weight: 600; }
+.menu-item:hover { background: rgba(255, 255, 255, .08); }
+.menu-item.activo { background: #2c4a68; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.lateral-pie { margin-top: auto; font-size: 12px; color: #c4d0dc; padding: 0 8px; }
+.lateral-titulo { font-weight: 700; color: white; margin-bottom: 4px; }
+.lateral-texto { margin-bottom: 14px; line-height: 1.4; }
+.lateral-aviso { border-top: 1px solid #2f4760; padding-top: 10px; line-height: 1.4; }
+
+/* Contenido */
+.contenido { padding: 32px 40px; flex: 1; min-width: 0; }
+h1 { margin: 0 0 6px; font-size: 30px; }
+.subtitulo { color: var(--suave); margin: 0 0 22px; max-width: 980px; line-height: 1.45; }
+
+.panel { background: white; border-radius: 22px; padding: 22px 24px; box-shadow: 0 3px 10px rgba(23, 42, 64, .10);
+         margin-bottom: 20px; }
+.panel-titulo { font-weight: 700; font-size: 16px; margin-bottom: 14px; }
+.panel.vacio { color: var(--suave); text-align: center; padding: 60px 24px; }
+.panel.alerta { color: #a04000; }
+.panel.ancho { width: 100%; }
+
+.dos-columnas { display: grid; grid-template-columns: minmax(420px, 1.05fr) 1fr; gap: 22px; align-items: start; }
+.dos-columnas.iguales { grid-template-columns: 1fr 1fr; }
+.columna-resultado { display: flex; flex-direction: column; }
+
+/* Formulario */
+.grupo { margin-bottom: 14px; }
+.grupo-titulo { font-size: 13px; font-weight: 700; color: var(--azul); text-transform: uppercase;
+                letter-spacing: .04em; margin-bottom: 8px; }
+.rejilla-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.etiqueta { display: block; font-size: 13px; color: var(--suave); margin-bottom: 4px; }
+.entrada { width: 100%; padding: 9px 12px; border: 1px solid var(--borde); border-radius: 8px; background: #f4f7fa;
+           font-size: 15px; }
+.desplegable .Select-control { border-radius: 8px; background: #f4f7fa; border-color: var(--borde); }
+.botones, .fila-botones { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+.boton { padding: 10px 18px; border-radius: 10px; border: 1px solid var(--borde); background: white;
+         font-weight: 600; cursor: pointer; color: var(--texto); }
+.boton.principal { background: var(--azul); color: white; border: none; padding: 12px 30px; font-size: 15px; }
+.boton:hover { filter: brightness(.96); }
+
+/* Resultados */
+.fila-numero { display: flex; align-items: center; gap: 16px; }
+.numero-grande { font-size: 44px; font-weight: 700; }
+.insignia { color: white; padding: 4px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.nota, .nota-imputados { font-size: 12px; color: var(--suave); margin: 4px 4px 12px; line-height: 1.45; }
+.nota-imputados { color: #8a5a00; }
+
+/* Tarjetas */
+.fila-tarjetas { display: grid; gap: 18px; margin-bottom: 20px; }
+.fila-tarjetas.dos { grid-template-columns: 1fr 1fr; }
+.fila-tarjetas.tres { grid-template-columns: repeat(3, 1fr); }
+.fila-tarjetas.cuatro { grid-template-columns: repeat(4, 1fr); }
+.tarjeta { background: white; border-radius: 22px; padding: 18px 22px; box-shadow: 0 3px 10px rgba(23, 42, 64, .10); }
+.tarjeta-titulo { font-weight: 700; font-size: 15px; }
+.tarjeta-valor { font-size: 32px; font-weight: 700; margin: 8px 0 4px; }
+.tarjeta-nota { font-size: 12.5px; color: var(--suave); }
+
+/* Controles */
+.controles { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: flex-end; }
+.filtros .entrada { width: 190px; }
+.radio label { margin-right: 16px; font-size: 14px; }
+.radio input { margin-right: 6px; }
+.barra { background: #eef3f8; border-radius: 8px; height: 26px; margin: 10px 0; overflow: hidden; }
+.barra-relleno { background: var(--azul); height: 100%; border-radius: 8px; }
+
+@media (max-width: 1100px) {
+  .dos-columnas, .dos-columnas.iguales { grid-template-columns: 1fr; }
+  .fila-tarjetas.cuatro { grid-template-columns: 1fr 1fr; }
+}
