@@ -9,8 +9,8 @@ stages:
       size: 426190
     - path: src/cargar_datos.py
       hash: md5
-      md5: da826c500044d1c27bea5c9f710dd2eb
-      size: 2497
+      md5: d689ca0ca75dee463eb843efbc56b5a0
+      size: 2432
     params:
       params.yaml:
         datos.archivo_crudo: data/raw/df_merged_final.xlsx
@@ -28,16 +28,16 @@ stages:
       size: 365591
     - path: src/clinical_features.py
       hash: md5
-      md5: b737429dac8e3691e5f586ac40ef0ae7
-      size: 3253
+      md5: 12e0326175d8d95c1e891e3852b0f621
+      size: 3173
     - path: src/preprocessing.py
       hash: md5
-      md5: 25f1dd68393fd572ca4e99745d7226c5
-      size: 6994
+      md5: 45d6e0aa8172b3b237f9d2e9d2834b35
+      size: 6841
     - path: src/procesar_datos.py
       hash: md5
-      md5: 7e1074fb8602903b66058fc7327eac35
-      size: 3828
+      md5: 335d459d6105e31241726fd228bb92ad
+      size: 3736
     params:
       params.yaml:
         procesamiento.fecha_corte_temporal: '2024-07-01'
@@ -95,3 +95,27 @@ stages:
       hash: md5
       md5: 009a6769dd085d0f6416999bd8c13e40
       size: 2866
+  modelo_tablero:
+    cmd: python tablero/preparar_modelo_provisional.py
+    deps:
+    - path: data/processed/dataset_modelado.csv
+      hash: md5
+      md5: 5d2387490cc54a665faa839ec7258f53
+      size: 224481
+    - path: tablero/config.py
+      hash: md5
+      md5: 6dc6305bc70115d5a496e0a4908534d7
+      size: 2765
+    - path: tablero/preparar_modelo_provisional.py
+      hash: md5
+      md5: 85be813097c899aa309951a35145c849
+      size: 3554
+    outs:
+    - path: models/modelo_estancia.joblib
+      hash: md5
+      md5: 5ec24cb9552309deaee108087186e1d3
+      size: 56100
+    - path: models/modelo_mortalidad.joblib
+      hash: md5
+      md5: 562f5373677418abb4b2e7e8ee21ed9e
+      size: 56154

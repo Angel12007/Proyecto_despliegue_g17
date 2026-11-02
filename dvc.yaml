@@ -2,49 +2,58 @@ stages:
   cargar:
     cmd: python src/cargar_datos.py
     deps:
-      - src/cargar_datos.py
-      - data/raw/df_merged_final.xlsx
+    - src/cargar_datos.py
+    - data/raw/df_merged_final.xlsx
     params:
-      - datos.archivo_crudo
+    - datos.archivo_crudo
     outs:
-      - data/interim/datos_cargados.csv
+    - data/interim/datos_cargados.csv
 
   procesar:
     cmd: python src/procesar_datos.py
     deps:
-      - src/procesar_datos.py
-      - src/clinical_features.py
-      - src/preprocessing.py
-      - data/interim/datos_cargados.csv
+    - src/procesar_datos.py
+    - src/clinical_features.py
+    - src/preprocessing.py
+    - data/interim/datos_cargados.csv
     params:
-      - procesamiento.umbral_estancia_prolongada_dias
-      - procesamiento.fecha_corte_temporal
+    - procesamiento.umbral_estancia_prolongada_dias
+    - procesamiento.fecha_corte_temporal
     outs:
-      - data/processed/dataset_modelado.csv
+    - data/processed/dataset_modelado.csv
 
   explorar:
     cmd: python src/exploracion.py
     deps:
-      - src/exploracion.py
-      - data/processed/dataset_modelado.csv
+    - src/exploracion.py
+    - data/processed/dataset_modelado.csv
     outs:
-      - reports/eda/resumen_variables.csv:
-          cache: false
-      - reports/eda/desenlaces.csv:
-          cache: false
-      - reports/eda/ingresos_por_periodo.csv:
-          cache: false
-      - reports/eda/fig1_faltantes.png:
-          cache: false
-      - reports/eda/fig2_estancia.png:
-          cache: false
-      - reports/eda/fig3_desenlaces_periodo.png:
-          cache: false
-      - reports/eda/fig4_variables_por_mortalidad.png:
-          cache: false
-      - reports/eda/fig5_correlaciones.png:
-          cache: false
+    - reports/eda/resumen_variables.csv:
+        cache: false
+    - reports/eda/desenlaces.csv:
+        cache: false
+    - reports/eda/ingresos_por_periodo.csv:
+        cache: false
+    - reports/eda/fig1_faltantes.png:
+        cache: false
+    - reports/eda/fig2_estancia.png:
+        cache: false
+    - reports/eda/fig3_desenlaces_periodo.png:
+        cache: false
+    - reports/eda/fig4_variables_por_mortalidad.png:
+        cache: false
+    - reports/eda/fig5_correlaciones.png:
+        cache: false
     metrics:
-      - reports/eda/metricas_eda.json:
-          cache: false
+    - reports/eda/metricas_eda.json:
+        cache: false
 
+  modelo_tablero:
+    cmd: python tablero/preparar_modelo_provisional.py
+    deps:
+    - data/processed/dataset_modelado.csv
+    - tablero/config.py
+    - tablero/preparar_modelo_provisional.py
+    outs:
+    - models/modelo_estancia.joblib
+    - models/modelo_mortalidad.joblib
