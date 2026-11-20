@@ -10,32 +10,32 @@ Aplicación en Dash con tres pantallas:
 
 ## Cómo correrlo
 
-Desde la carpeta principal del repositorio, con el entorno activado:
+**Con Docker (despliegue):** ver `docs/manual_instalacion.md`. El tablero consulta la API en `API_URL`.
+
+**Local:**
 
 ```cmd
-pip install -r requirements-tablero.txt
-dvc repro modelo_tablero
+pip install -r tablero/requirements.txt
+set API_URL=http://127.0.0.1:8001
 python tablero/app.py
 ```
 
-Abrir http://127.0.0.1:8050 en el navegador.
-
-`dvc repro modelo_tablero` crea el modelo provisional en `models/` si no existe. Sin DVC también funciona: `python tablero/preparar_modelo_provisional.py`.
+Sin `API_URL`, el tablero usa el paquete `modelo_uci` instalado (`pip install api/model-pkg/modelo_uci-0.1.0-py3-none-any.whl`). Abrir http://127.0.0.1:8050.
 
 ## Archivos
 
 | Archivo | Contenido |
 |---|---|
 | `app.py` | Pantallas y callbacks |
-| `servicio_modelo.py` | Predicciones, categorías de riesgo, explicación por paciente, días esperados y tarifas. En la entrega 3 se cambia para llamar a la API. |
+| `servicio_modelo.py` | Llama a la API (o al paquete local) para las predicciones; explicación por paciente, días esperados y tarifas |
 | `datos.py` | Censo por fecha, ingresos por periodo, indicadores y curvas |
 | `config.py` | Variables del formulario, tarifas y rutas |
-| `preparar_modelo_provisional.py` | Regresión logística provisional mientras el equipo elige el modelo final |
+| `Dockerfile`, `run.sh`, `requirements.txt` | Imagen del tablero (gunicorn, puerto 8050) |
 | `assets/estilos.css` | Estilos según la maqueta |
 
 ## Supuestos
 
-- **Modelo:** regresión logística provisional, entrenada con los ingresos anteriores al 1-jul-2024. Se reemplaza por el modelo elegido en MLflow, guardado con el mismo formato en `models/`.
+- **Modelos:** XGBoost (estancia) y Random Forest (mortalidad) del paquete `modelo_uci` 0.1.0, servidos por la API.
 - **Riesgo alto:** probabilidad en el 20 % superior de la cohorte de entrenamiento. Intermedio: entre la mediana y ese corte.
 - **Días esperados:** p × estancia media de quienes se quedan ≥ 7 días + (1 − p) × estancia media de los demás (cohorte de entrenamiento). En el censo se ajustan por los días que el paciente ya lleva.
 - **Costos de referencia:** Resolución 1068 de 2020: $2.458.848 por día de UCI adulto (pacientes con soporte ventilatorio en 24 h) y $1.921.669 por día de cuidado intermedio adulto (los demás), pesos de 2020. No son costos reales del hospital.

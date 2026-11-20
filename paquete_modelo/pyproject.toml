@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelo_uci"
+version = "0.1.0"
+description = "Paquete de modelos predictivos UCI Analytics - Grupo 17"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy==2.5.4",
+    "pandas==3.1.0",
+    "scikit-learn==1.9.1",
+    "xgboost==3.4.1",
+    "joblib==1.6.0",
+    "pydantic==2.14.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["modelo_uci*"]
+
+[tool.setuptools.package-data]
+modelo_uci = ["modelos/*.joblib"]

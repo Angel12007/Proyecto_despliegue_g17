@@ -1,0 +1,2 @@
+Aquí va el paquete del modelo: modelo_uci-0.1.0-py3-none-any.whl
+(se construye en paquete_modelo con: python -m build --wheel -o dist .)

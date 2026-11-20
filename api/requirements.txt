@@ -1,0 +1,4 @@
+./model-pkg/modelo_uci-0.1.0-py3-none-any.whl
+uvicorn>=0.30,<1.0
+fastapi>=0.115,<1.0
+loguru>=0.7,<1.0

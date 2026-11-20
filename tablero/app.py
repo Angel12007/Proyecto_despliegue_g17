@@ -105,10 +105,19 @@ def navegar(ruta):
     menu = [dcc.Link(t, href=h, className="menu-item activo" if h == ruta else "menu-item") for h, t in MENU]
     pagina = {"/": pagina_prediccion, "/planificacion": pagina_planificacion,
               "/capacidad": pagina_capacidad}[ruta]()
-    me, mm = sm.cargar_modelo("estancia_prolongada"), sm.cargar_modelo("mortality")
-    info = [html.Div(me["nombre"]),
-            html.Div(f"AUROC prueba: estancia {miles(me['metricas']['auroc_prueba'], 3)} · "
-                     f"muerte {miles(mm['metricas']['auroc_prueba'], 3)}")]
+    nombres = {"xgboost": "XGBoost", "random_forest": "Random Forest", "logistica": "Regresión logística",
+               "catboost": "CatBoost"}
+    try:
+        inf = sm.info_modelo()
+        me, mm = inf["estancia"], inf["muerte"]
+        info = [html.Div(f"Estancia: {nombres.get(me['algoritmo'], me['algoritmo'])} · "
+                         f"AUROC {miles(me['metricas']['auroc_prueba'], 3)}"),
+                html.Div(f"Muerte: {nombres.get(mm['algoritmo'], mm['algoritmo'])} · "
+                         f"AUROC {miles(mm['metricas']['auroc_prueba'], 3)}"),
+                html.Div(f"Versión del modelo {me['version']} · "
+                         + ("vía API" if config.API_URL else "paquete local"))]
+    except Exception as e:  # la API no responde
+        info = [html.Div(f"No hay conexión con el modelo: {e}", style={"color": "#f5b7b1"})]
     return menu, pagina, info
 
 
@@ -171,15 +180,20 @@ def calcular(_, *valores):
         return html.Div("Faltan demasiados datos (más de la mitad). Complete al menos edad, escalas y soportes.",
                         className="panel vacio alerta")
     X = pd.DataFrame([paciente])
-    pred = sm.predecir_tabla(X).iloc[0]
+    try:
+        pred = sm.predecir_tabla(X).iloc[0]
+    except Exception as e:
+        return html.Div(f"No fue posible obtener la predicción del modelo: {e}", className="panel vacio alerta")
     est = datos.estimador()
     dias = float(est.totales([pred["p_estancia"]])[0])
     vent = paciente["ventilatory_support"]
     tarifa = tarifas["uci"] if vent == 1 else tarifas["intermedio"]
     nota_tarifa = "tarifa UCI" if vent == 1 else "tarifa intermedio"
 
+    contrib_todas = sm.contribuciones(paciente)
+
     def bloque(titulo, p, riesgo, desenlace, color):
-        contrib = sm.contribuciones(paciente, desenlace)
+        contrib = contrib_todas[desenlace]
         fig = go.Figure(go.Bar(x=contrib["efecto"] * 100, y=contrib["variable"], orientation="h",
                                marker_color=[ROJO if e > 0 else VERDE for e in contrib["efecto"]]))
         fig.update_layout(title=dict(text="Qué datos mueven el riesgo (puntos porcentuales)", font=dict(size=12)))
@@ -194,15 +208,16 @@ def calcular(_, *valores):
 
     return [
         bloque("Probabilidad de estancia ≥ 7 días", pred["p_estancia"], pred["riesgo_estancia"],
-               "estancia_prolongada", AZUL),
-        bloque("Riesgo de muerte en UCI", pred["p_muerte"], pred["riesgo_muerte"], "mortality", VERDE),
+               "estancia", AZUL),
+        bloque("Riesgo de muerte en UCI", pred["p_muerte"], pred["riesgo_muerte"], "muerte", VERDE),
         html.Div([
             tarjeta("Días de estancia esperados", miles(dias, 1), "promedio ponderado por el riesgo"),
             tarjeta("Costo de referencia esperado", millones(dias * tarifa), f"{nota_tarifa} · pesos 2020"),
         ], className="fila-tarjetas dos"),
         html.Div(("Datos imputados por el modelo: " + ", ".join(faltantes)) if faltantes else
                  "Todos los datos fueron ingresados.", className="nota-imputados"),
-        html.Div("Riesgo alto = 20 % de pacientes con mayor probabilidad en la cohorte de entrenamiento. "
+        html.Div("Riesgo alto = 20 % de pacientes con mayor probabilidad en la cohorte de entrenamiento; "
+                 "intermedio = entre la mediana y ese corte. "
                  "No sustituye la valoración médica.", className="nota"),
     ]
 
@@ -461,4 +476,5 @@ def actualizar_capacidad(origen, ingreso, ini, fin, tarifas):
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="127.0.0.1", port=8050)
+    import os
+    app.run(debug=False, host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "8050")))

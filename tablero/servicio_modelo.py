@@ -1,70 +1,106 @@
-"""Predicciones, días esperados y costos.
+"""Predicciones, explicación por paciente, días esperados y tarifas.
 
-Toda la lógica del modelo está aquí, separada de las pantallas. En la entrega 3
-`predecir_tabla` se cambiará para llamar a la API (FastAPI) en lugar de cargar
-los archivos .joblib; el resto del tablero no cambia.
+Las predicciones vienen de la API (FastAPI, contenedor `api`) cuando está definida
+la variable de entorno API_URL. Sin ella, el tablero usa directamente el paquete
+`modelo_uci` instalado (útil para desarrollo). Las pantallas no cambian en ningún caso.
 """
 from __future__ import annotations
 
 from functools import lru_cache
 
-import joblib
 import numpy as np
 import pandas as pd
+import requests
 
 import config
 
-
-@lru_cache(maxsize=None)
-def cargar_modelo(desenlace: str) -> dict:
-    ruta = config.MODELOS[desenlace]
-    if not ruta.exists():
-        raise FileNotFoundError(
-            f"No existe {ruta}. Corra primero: python tablero/preparar_modelo_provisional.py "
-            "(o dvc repro).")
-    return joblib.load(ruta)
+LOTE = 300  # pacientes por solicitud a la API
 
 
-def categoria(p: float, umbrales: dict) -> str:
-    if p >= umbrales["alto"]:
-        return "Alto"
-    if p >= umbrales["intermedio"]:
-        return "Intermedio"
-    return "Bajo"
+RANGOS = {c[0]: c[3] for c in config.CAMPOS if c[2] == "num"}
+
+
+def _limpiar(X: pd.DataFrame) -> list[dict]:
+    """Convierte la tabla a registros JSON: NaN -> None y categorías a enteros.
+
+    Los valores fuera de los rangos que acepta la API (por ejemplo, un lactato de 230
+    en la base histórica) se tratan como faltantes y el modelo los imputa.
+    """
+    X = X[config.VARIABLES].astype(float).copy()
+    for v, (minimo, maximo) in RANGOS.items():
+        X.loc[(X[v] < minimo) | (X[v] > maximo), v] = np.nan
+    registros = []
+    for fila in X.to_dict("records"):
+        registros.append({k: (None if pd.isna(v) else (int(v) if float(v).is_integer() else float(v)))
+                          for k, v in fila.items()})
+    return registros
+
+
+def _predecir_api(registros: list[dict]) -> list[dict]:
+    salida = []
+    for i in range(0, len(registros), LOTE):
+        r = requests.post(config.API_PREDICT, json={"inputs": registros[i:i + LOTE]}, timeout=60)
+        r.raise_for_status()
+        salida.extend(r.json()["predictions"])
+    return salida
+
+
+def _predecir_local(registros: list[dict]) -> list[dict]:
+    from modelo_uci.predict import make_prediction
+    res = make_prediction(input_data=pd.DataFrame(registros, columns=config.VARIABLES))
+    if res["errors"]:
+        raise ValueError(res["errors"])
+    return res["predictions"]
 
 
 def predecir_tabla(X: pd.DataFrame) -> pd.DataFrame:
     """Probabilidades y categorías de riesgo para varios pacientes."""
-    salida = pd.DataFrame(index=X.index)
-    for desenlace, sufijo in [("estancia_prolongada", "estancia"), ("mortality", "muerte")]:
-        m = cargar_modelo(desenlace)
-        p = m["pipeline"].predict_proba(X[m["variables"]].astype(float))[:, 1]
-        salida[f"p_{sufijo}"] = p
-        salida[f"riesgo_{sufijo}"] = [categoria(v, m["umbrales"]) for v in p]
-    return salida
+    registros = _limpiar(X)
+    preds = _predecir_api(registros) if config.API_URL else _predecir_local(registros)
+    return pd.DataFrame(preds, index=X.index)
 
 
-def contribuciones(paciente: dict, desenlace: str, n: int = 5) -> pd.DataFrame:
-    """Cuánto cambia la probabilidad si cada variable se reemplaza por la mediana de la cohorte.
+@lru_cache(maxsize=1)
+def info_modelo() -> dict:
+    """Algoritmo y métricas de los modelos en uso (desde la API o el paquete)."""
+    if config.API_URL:
+        r = requests.get(config.API_INFO, timeout=30)
+        r.raise_for_status()
+        return r.json()
+    from modelo_uci.predict import info_modelos
+    return info_modelos()
 
-    Es una explicación sencilla y válida para cualquier modelo: valores positivos
-    indican que ese dato del paciente sube su riesgo frente a un paciente típico.
+
+@lru_cache(maxsize=1)
+def medianas() -> dict:
+    """Medianas de la cohorte de entrenamiento, para la explicación por paciente."""
+    df = pd.read_csv(config.RUTA_DATOS)
+    ent = df[df["particion_temporal"] == "entrenamiento"]
+    return ent[config.VARIABLES].median().to_dict()
+
+
+def contribuciones(paciente: dict, n: int = 5) -> dict[str, pd.DataFrame]:
+    """Cuánto cambia la probabilidad si cada dato se reemplaza por la mediana de la cohorte.
+
+    Válido para cualquier modelo: valores positivos indican que ese dato del paciente
+    sube su riesgo frente a un paciente típico. Se resuelve en una sola solicitud a la API.
     """
-    m = cargar_modelo(desenlace)
-    base = pd.DataFrame([paciente])[m["variables"]].astype(float)
-    p0 = m["pipeline"].predict_proba(base)[0, 1]
-    filas = []
-    for v in m["variables"]:
+    base = pd.DataFrame([paciente])[config.VARIABLES].astype(float)
+    filas, nombres = [base], []
+    for v in config.VARIABLES:
         if pd.isna(base.at[0, v]):
             continue
-        alterno = base.copy()
-        alterno.at[0, v] = m["medianas"][v]
-        delta = p0 - m["pipeline"].predict_proba(alterno)[0, 1]
-        filas.append({"variable": config.ETIQUETAS[v], "efecto": delta})
-    tabla = pd.DataFrame(filas)
-    if tabla.empty:
-        return tabla
-    return tabla.reindex(tabla["efecto"].abs().sort_values(ascending=False).index).head(n)
+        alt = base.copy()
+        alt.at[0, v] = medianas()[v]
+        filas.append(alt)
+        nombres.append(v)
+    pred = predecir_tabla(pd.concat(filas, ignore_index=True))
+    salida = {}
+    for desenlace in ["estancia", "muerte"]:
+        p = pred[f"p_{desenlace}"].to_numpy()
+        tabla = pd.DataFrame({"variable": [config.ETIQUETAS[v] for v in nombres], "efecto": p[0] - p[1:]})
+        salida[desenlace] = tabla.reindex(tabla["efecto"].abs().sort_values(ascending=False).index).head(n)
+    return salida
 
 
 # ----------------------------------------------------------------------------
@@ -73,14 +109,11 @@ def contribuciones(paciente: dict, desenlace: str, n: int = 5) -> pd.DataFrame:
 class EstimadorDias:
     """Días de estancia esperados a partir de la probabilidad de estancia >= 7 días.
 
-    Usa la distribución de estancias observada en la partición de entrenamiento,
-    separada en dos grupos (< 7 días y >= 7 días):
+        días esperados = p · media(>= 7 días) + (1 - p) · media(< 7 días)
 
-        días esperados = p · media(>= 7) + (1 - p) · media(< 7)
-
-    Para un paciente que ya lleva d días en la UCI, se actualiza p con la
-    información de que sigue hospitalizado (si d >= 7, ya es estancia prolongada)
-    y se usa la estancia residual media de cada grupo.
+    con la distribución de estancias de la partición de entrenamiento. Para un paciente
+    que ya lleva d días en la UCI, se actualiza p con la información de que sigue
+    hospitalizado y se usa la estancia residual media de cada grupo.
     """
 
     def __init__(self, dias_entrenamiento: pd.Series):

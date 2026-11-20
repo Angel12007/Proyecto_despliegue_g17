@@ -1,0 +1,11 @@
+.git
+.venv
+venv
+**/__pycache__
+.dvc/cache
+mlruns
+data/raw
+data/interim
+models
+reports
+paquete_modelo/dist

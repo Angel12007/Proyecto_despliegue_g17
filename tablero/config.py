@@ -3,11 +3,15 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 RUTA_DATOS = RAIZ / "data" / "processed" / "dataset_modelado.csv"
-CARPETA_MODELOS = RAIZ / "models"
-MODELOS = {
-    "estancia_prolongada": CARPETA_MODELOS / "modelo_estancia.joblib",
-    "mortality": CARPETA_MODELOS / "modelo_mortalidad.joblib",
-}
+import os
+
+# Datos: en el contenedor Docker se copian a /opt/tablero/data; en el repositorio, a data/processed
+RUTA_DATOS = Path(os.getenv("RUTA_DATOS", str(RUTA_DATOS)))
+
+# API de predicción. Si no se define API_URL, el tablero usa el paquete modelo_uci instalado localmente.
+API_URL = os.getenv("API_URL", "").rstrip("/")          # ej. http://api:8001 o http://<IP-EC2>:8001
+API_PREDICT = f"{API_URL}/api/v1/predict"
+API_INFO = f"{API_URL}/api/v1/model-info"
 
 UMBRAL_ESTANCIA = 7  # días
 FRACCION_ALTO_RIESGO = 0.20  # meta de negocio: 20 % de mayor riesgo
@@ -23,7 +27,7 @@ FUENTE_TARIFAS = ("Resolución 1068 de 2020 (MinSalud), art. 3: UCI adulto $2.45
 
 # Variables que pide el formulario: (columna, etiqueta, tipo, opciones o rango)
 CAMPOS = [
-    ("age", "Edad (años)", "num", (18, 100)),
+    ("age", "Edad (años)", "num", (18, 110)),
     ("origin_of_tumor", "Origen del tumor", "cat", {"Sólido": 1, "Hematológico": 0}),
     ("type_of_admission", "Tipo de ingreso", "cat", {"Médico": 1, "Quirúrgico": 2}),
     ("ecog", "ECOG (codificación de la base, 1–5)", "cat", {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5}),
