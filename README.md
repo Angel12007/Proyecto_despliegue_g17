@@ -9,7 +9,7 @@ Curso: Despliegue de Soluciones Analíticas – MIAD, Universidad de los Andes.
 | Componente | Dirección |
 |---|---|
 | API (documentación interactiva) | https://proyectodespliegueg17-production.up.railway.app/docs |
-| Tablero | [pendiente: URL del tablero en Railway] |
+| Tablero | https://tablero-production-fa43181f.up.railway.app |
 | Datos (remoto DVC) | `s3://proyecto-g17-dvc-2026/datos` |
 
 ## Arquitectura
