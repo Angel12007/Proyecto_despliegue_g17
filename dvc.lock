@@ -95,27 +95,3 @@ stages:
       hash: md5
       md5: 009a6769dd085d0f6416999bd8c13e40
       size: 2866
-  modelo_tablero:
-    cmd: python tablero/preparar_modelo_provisional.py
-    deps:
-    - path: data/processed/dataset_modelado.csv
-      hash: md5
-      md5: 5d2387490cc54a665faa839ec7258f53
-      size: 224481
-    - path: tablero/config.py
-      hash: md5
-      md5: 6dc6305bc70115d5a496e0a4908534d7
-      size: 2765
-    - path: tablero/preparar_modelo_provisional.py
-      hash: md5
-      md5: 85be813097c899aa309951a35145c849
-      size: 3554
-    outs:
-    - path: models/modelo_estancia.joblib
-      hash: md5
-      md5: 5ec24cb9552309deaee108087186e1d3
-      size: 56100
-    - path: models/modelo_mortalidad.joblib
-      hash: md5
-      md5: 562f5373677418abb4b2e7e8ee21ed9e
-      size: 56154

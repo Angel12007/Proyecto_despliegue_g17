@@ -20,8 +20,8 @@ stages:
     - procesamiento.umbral_estancia_prolongada_dias
     - procesamiento.fecha_corte_temporal
     outs:
-    - data/processed/dataset_modelado.csv
-
+    - data/processed/dataset_modelado.csv:
+        cache: false
   explorar:
     cmd: python src/exploracion.py
     deps:
@@ -48,12 +48,3 @@ stages:
     - reports/eda/metricas_eda.json:
         cache: false
 
-  modelo_tablero:
-    cmd: python tablero/preparar_modelo_provisional.py
-    deps:
-    - data/processed/dataset_modelado.csv
-    - tablero/config.py
-    - tablero/preparar_modelo_provisional.py
-    outs:
-    - models/modelo_estancia.joblib
-    - models/modelo_mortalidad.joblib
