@@ -1,55 +1,69 @@
-# Proyecto Despliegue G17 – Triage de riesgo al ingreso en UCI oncológica
+# UCI Analytics – Triage de riesgo al ingreso en UCI oncológica (Grupo 17)
 
-Herramienta para estimar, en las primeras 24 horas de ingreso a una UCI de un hospital de cuarto nivel de atención oncológica, el riesgo de **muerte en UCI** y de **estancia prolongada (≥ 7 días)**. La herramienta se despliega como API con un tablero de capacidad.
+Herramienta que estima, con la información de las primeras 24 horas, el riesgo de **estancia en UCI ≥ 7 días** (desenlace principal) y de **muerte en UCI** (secundario) en pacientes oncológicos de un hospital de cuarto nivel, y traduce esas probabilidades en días-cama y costos de referencia para planificar camas.
 
-Curso: Despliegue de Soluciones Analíticas – MIAD, Universidad de los Andes. Grupo 17.
+Curso: Despliegue de Soluciones Analíticas – MIAD, Universidad de los Andes.
 
-## Qué contiene este repositorio
+## Enlaces
 
-El cargue de la base y su procesamiento hasta dejar la **versión final para modelado**. Los datos no se guardan en Git: los versiona DVC con un remoto en S3.
+| Componente | Dirección |
+|---|---|
+| API (documentación interactiva) | https://proyectodespliegueg17-production.up.railway.app/docs |
+| Tablero | [pendiente: URL del tablero en Railway] |
+| Datos (remoto DVC) | `s3://proyecto-g17-dvc-2026/datos` |
+
+## Arquitectura
 
 ```
-├── data/
-│   ├── raw/df_merged_final.xlsx.dvc   # base inicial (DVC)
-│   ├── interim/                       # base cargada, tipos corregidos (DVC)
-│   └── processed/                     # base final para modelado: dataset_modelado.csv (DVC)
-├── src/
-│   ├── cargar_datos.py        # etapa 1: lee el Excel, "Sin dato" → faltante, tipos numéricos
-│   ├── procesar_datos.py      # etapa 2: variables clínicas, desenlaces y partición temporal
-│   ├── clinical_features.py   # construcción de variables clínicas
-│   └── preprocessing.py       # limpieza, duplicados y renombrado de variables
-├── docs/                      # guía de Git y DVC
-├── params.yaml                # umbral de estancia y fecha de corte temporal
-├── dvc.yaml / dvc.lock        # pipeline reproducible
-└── requirements.txt
+dataset (DVC) ──► experimentos MLflow (Databricks) ──► paquete modelo_uci (.whl)
+                                                            │
+Navegador ──► Tablero Dash (Docker) ──HTTP──► API FastAPI (Docker) ──┘
 ```
 
-## Cómo reproducirlo
+## Estructura
+
+```
+├── data/                 # base inicial, cargada y final (versionadas con DVC en S3)
+├── src/                  # cargue, procesamiento y exploración (etapas DVC)
+├── reports/eda/          # resultados de la exploración
+├── experimentos/         # entrenamiento y resultados en MLflow (Databricks)
+│   ├── logistica_random_forest/
+│   ├── xgboost_catboost/
+│   └── resultados/       # tablas de las 16 corridas
+├── paquete_modelo/       # paquete modelo_uci: XGBoost (estancia) y Random Forest (mortalidad), 14 variables
+├── api/                  # API FastAPI que sirve el paquete (Dockerfile)
+├── tablero/              # tablero Dash que consume la API (Dockerfile)
+├── docs/                 # guías y manuales
+├── dvc.yaml · dvc.lock · params.yaml
+└── docker-compose.yml    # API + tablero en una máquina con Docker
+```
+
+## Modelos desplegados
+
+| Desenlace | Modelo | Variables | AUROC (prueba temporal) |
+|---|---|---|---|
+| Estancia ≥ 7 días | XGBoost | 14 | 0,898 |
+| Muerte en UCI | Random Forest | 14 | 0,937 |
+
+Validación temporal: entrenamiento con ingresos hasta junio de 2024 (816 pacientes) y prueba con los posteriores (181). Las 14 variables son las del formulario del tablero: edad, APACHE II, SAPS III, SOFA, lactato, PaO2/FiO2, plaquetas, soporte ventilatorio, vasopresores, choque, sepsis, ECOG, origen del tumor y tipo de ingreso.
+
+## Reproducir
 
 ```bash
-git clone https://github.com/Angel12007/Proyecto_despliegue_g17.git
-cd Proyecto_despliegue_g17
-python -m venv .venv
-.venv\Scripts\activate            # Windows (cmd)
-# source .venv/bin/activate       # Linux / máquina virtual
 pip install -r requirements.txt
-
-# con credenciales vigentes de AWS Academy en ~/.aws/credentials
-dvc pull      # descarga la base inicial y la final desde S3
-dvc repro     # vuelve a correr cargar → procesar si algo cambió
+dvc pull            # base desde S3 (requiere credenciales de AWS Academy)
+dvc repro           # cargar → procesar → explorar
 ```
 
-## Decisiones de procesamiento
+`data/processed/dataset_modelado.csv` también está en Git (con `cache: false` en DVC) porque el tablero desplegado en Railway lo necesita y Railway no puede hacer `dvc pull`.
 
-- **No se imputa sobre la base completa.** Los faltantes se dejan como están; la imputación (KNN para laboratorios y media para lo restante) se ajustará dentro del pipeline del modelo usando solo la partición de entrenamiento, para no pasar información de la prueba al entrenamiento.
-- Se eliminan reingresos duplicados: queda el primer ingreso de cada paciente.
-- Desenlaces codificados 0/1, con 1 = evento: `mortality` (muerte en UCI), `death_30d` (muerte a 30 días), `estancia_prolongada` (≥ 7 días) y `muerte_o_estancia_prolongada`.
-- `particion_temporal`: ingresos antes del 1 de julio de 2024 = entrenamiento (n = 816); desde esa fecha = prueba (n = 181). La fecha y el umbral de estancia se cambian en `params.yaml`.
+## Documentación
 
-## Datos
+| Documento | Contenido |
+|---|---|
+| [docs/manual_instalacion.md](docs/manual_instalacion.md) | Despliegue de la API y el tablero |
+| [docs/manual_usuario.md](docs/manual_usuario.md) | Uso del tablero |
 
-997 pacientes con cáncer ingresados a la UCI entre julio de 2022 y agosto de 2025. La base está anonimizada.
+## Origen de los datos
 
-## Licencia y origen
-
-La base y las funciones de `clinical_features.py` y `preprocessing.py` provienen de un repositorio previo del equipo investigador, publicado bajo licencia CC BY 4.0 (ver `LICENSE_codigo_articulo.txt`).
+La base anonimizada y las funciones de `src/clinical_features.py` y `src/preprocessing.py` provienen de un repositorio previo del equipo investigador, publicado bajo licencia CC BY 4.0 (ver `LICENSE_codigo_articulo.txt`).
